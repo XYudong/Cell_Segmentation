@@ -98,11 +98,11 @@ def train_Unet(dataset, lr, epochs):
     model.compile(optimizer=Adam(lr),
                   loss=['binary_crossentropy', 'binary_crossentropy'],      # mask, edge
                   metrics=[dice_coef],
-                  loss_weights=[0.999, 0.001])
+                  loss_weights=[0.9999, 0.0001])
     # callbacks
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5,
                                   patience=4, verbose=1, min_lr=1e-6)
-    model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_06.hdf5',
+    model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_08.hdf5',
                                        monitor='val_loss',
                                        save_best_only=True,
                                        verbose=1)
@@ -126,4 +126,4 @@ def train_Unet(dataset, lr, epochs):
 
 if __name__ == '__main__':
     dataset = 'FAK_N1'
-    train_Unet(dataset, lr=1e-3, epochs=21)
+    train_Unet(dataset, lr=1e-3, epochs=11)

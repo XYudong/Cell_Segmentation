@@ -2,8 +2,21 @@ import numpy as np
 import os
 import cv2
 import glob
-
+from tensorflow.python.keras import backend as K
+import matplotlib.pyplot as plt
 """prepare test images before going through Unet segmentation model"""
+
+
+def dice_loss(y_true, y_pred):
+    return 1 - dice_coef(y_true, y_pred)
+
+
+def dice_coef(y_true, y_pred):
+    smooth = 1
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
 
 class SegPreparer:
@@ -28,13 +41,13 @@ class SegPreparer:
 
     def load_test_set(self):
         """load test set from disk"""
-        self.img_list = glob.glob(os.path.join(self.im_path, '*.tif'))
+        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.tif')))
         self.num_test = len(self.img_list)
         print(self.img_list)
         print(self.num_test, ' images')
 
         if self._mask_path is not None:
-            self.mask_list = glob.glob(os.path.join(self._mask_path, '*.png'))
+            self.mask_list = sorted(glob.glob(os.path.join(self._mask_path, '*.png')))
             assert len(self.mask_list) == self.num_test, "different number of test images and masks"
         return
 
@@ -113,7 +126,6 @@ class SegPreparer:
         out = np.zeros((self.num_y * self.OUTPUT_SIZE, self.num_x * self.OUTPUT_SIZE))
         imgs *= 255
         for idx, img_crop in enumerate(imgs):
-            # TODO: save multiple images
             col = idx % self.num_x
             row = np.floor(idx / self.num_x)
             out[int(row * self.OUTPUT_SIZE): int((row + 1) * self.OUTPUT_SIZE),
@@ -137,10 +149,25 @@ class SegPreparer:
             return self.imgs, self.masks, self.edges     # arrays, for evaluation
 
     def get_imgs(self):
+        # TODO: save multiple images
         self.load_test_set()
         mean, std = self.get_stats(self.stats_path)     # images stats from training set
         imgs = []
-        for img_name in self.img_list:
-            img = (cv2.imread(img_name, 0) - mean) / std
-            imgs.append(img[:, 0:-8, np.newaxis].repeat(3, axis=-1))
-        return np.stack(imgs, axis=0)   # (N, 832, 1128-8, 3)
+        if self._mask_path is None:
+            for img_name in self.img_list:
+                img = (cv2.imread(img_name, 0) - mean) / std
+                imgs.append(img[:, 0:-8, np.newaxis].repeat(3, axis=-1))
+            return np.stack(imgs, axis=0)   # (N, 832, 1128-8, 3)
+        else:
+            masks = []
+            edges = []
+            for img_name, mask_name in zip(self.img_list, self.mask_list):
+                img = (cv2.imread(img_name, 0) - mean) / std
+                mask = cv2.imread(mask_name, 0)
+                edge = self.get_edge(mask) / 255
+                mask = mask / 255                   # model target should be binary mask!
+
+                imgs.append(img[:, 0:-8, np.newaxis].repeat(3, axis=-1))    # model input
+                masks.append(mask[30:-30, 30:-38, np.newaxis])              # model output
+                edges.append(edge[30:-30, 30:-38, np.newaxis])
+            return np.stack(imgs, axis=0), np.stack(masks, axis=0), np.stack(edges, axis=0)
