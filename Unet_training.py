@@ -8,7 +8,7 @@ from tensorflow.python.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.python.keras import backend as K
 
 tf.keras.backend.set_image_data_format('channels_last')
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # crop the original image(s) into this smaller square portions, which are resized to this value (68 pixels by 68 pixels)
 S_SIZE = 68
@@ -98,18 +98,18 @@ def train_Unet(dataset, lr, epochs):
     model.compile(optimizer=Adam(lr),
                   loss=['binary_crossentropy', 'binary_crossentropy'],      # mask, edge
                   metrics=[dice_coef],
-                  loss_weights=[0.99, 0.01])
+                  loss_weights=[0.999, 0.001])
     # callbacks
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5,
                                   patience=4, verbose=1, min_lr=1e-6)
-    model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_05.hdf5',
+    model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_06.hdf5',
                                        monitor='val_loss',
                                        save_best_only=True,
                                        verbose=1)
     tensorboard = TensorBoard(log_dir='./log/' + dataset + '/02',
                               write_graph=False,
                               write_grads=True,
-                              histogram_freq=10,
+                              histogram_freq=5,
                               batch_size=batch_size)
     # train
     hist = model.fit_generator(train_generator,
@@ -126,4 +126,4 @@ def train_Unet(dataset, lr, epochs):
 
 if __name__ == '__main__':
     dataset = 'FAK_N1'
-    train_Unet(dataset, lr=1e-3, epochs=81)
+    train_Unet(dataset, lr=1e-3, epochs=21)

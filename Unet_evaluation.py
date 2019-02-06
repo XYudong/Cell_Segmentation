@@ -27,6 +27,7 @@ def dice_coef(y_true, y_pred):
 
 
 def get_model(model_name):
+    """build a model from saved model with new input shape"""
     model = tf.keras.models.load_model('./results/model/' + model_name,
                                        custom_objects={'dice_loss': dice_loss,
                                                        'dice_coef': dice_coef},
@@ -48,7 +49,7 @@ def evaluate_model(model_name):
                                                        'dice_coef': dice_coef},
                                        compile=True)
 
-    outputs = model.evaluate(imgs, [masks, edges], batch_size)         # edges
+    outputs = model.evaluate(imgs, [masks, edges], batch_size)
 
     print('loss and coef: ', outputs)
 
@@ -97,7 +98,7 @@ def save_img(img, file_path):
 
 
 if __name__ == '__main__':
-    model_name = 'vUnet_FAK_N1_05.hdf5'
+    model_name = 'vUnet_FAK_N1_06.hdf5'
     # evaluate_model(model_name)
     predict_mask_v2(model_name)
 

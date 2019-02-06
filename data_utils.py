@@ -4,6 +4,7 @@ import cv2
 import glob
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
 
 
 class DataPreparer:
@@ -26,8 +27,10 @@ class DataPreparer:
 
     def load_img_mask(self):
         """load images and masks from disk and get edges"""
-        self.img_list = glob.glob(os.path.join(self.im_path, '*.tif'))
-        self.mask_list = glob.glob(os.path.join(self.mask_path, '*.png'))
+        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.tif')))
+        self.mask_list = sorted(glob.glob(os.path.join(self.mask_path, '*.png')))
+        # print(self.img_list)
+        # print(self.mask_list)
         assert len(self.img_list) == len(self.mask_list), 'inconsistent number of imgs and masks'
         return
 
@@ -54,13 +57,13 @@ class DataPreparer:
             loc = np.where(edge > 0)      # a tuple of two arrays, represent indices of row and col respectively
         else:
             loc = np.where(edge < 1)
-        sample_idx = np.random.randint(0, high=len(loc[0]), size=number)
+        sample_idx = np.random.choice(np.arange(len(loc[0])), size=number, replace=False)  # guarantee uniqueness
         return loc[0][sample_idx], loc[1][sample_idx]
 
     def crop_all(self):
-        edge_ratio = 0.7
+        edge_ratio = 0.6
         edge_num = int(self.crop_num * edge_ratio)
-        back_num = self.crop_num - edge_num
+        other_num = self.crop_num - edge_num
         pad_width = int(np.ceil(self.CROP_SIZE / 2))
         moving_sum = []
 
@@ -70,20 +73,34 @@ class DataPreparer:
             edge = self.get_edge(mask)
             moving_sum.append(img)
 
+            # sampling crop centers
             row_p, col_p = self.sample_loc(edge, edge_num, True)
-            row_n, col_n = self.sample_loc(edge, back_num, False)
+            row_p += np.random.randint(-10, 11, edge_num)       # add some random offsets to locations on edge
+            col_p += np.random.randint(-10, 11, edge_num)
+            row_n, col_n = self.sample_loc(edge, other_num, False)
             rows = np.hstack((row_p, row_n)) + pad_width
             cols = np.hstack((col_p, col_n)) + pad_width
 
-            img = np.lib.pad(img, pad_width, 'symmetric')
-            mask = np.lib.pad(mask, pad_width, 'symmetric')
-            edge = np.lib.pad(edge, pad_width, 'symmetric')
+            img = np.pad(img, pad_width, 'symmetric')
+            mask = np.pad(mask, pad_width, 'symmetric')
+            edge = np.pad(edge, pad_width, 'symmetric')
 
             self.imgs.append(self.crop_on_loc(img, rows, cols))
             self.masks.append(self.crop_on_loc(mask, rows, cols))
             self.edges.append(self.crop_on_loc(edge, rows, cols))
 
-        # normalization
+            # # Visualization
+            # f1 = plt.subplot(311)
+            # plt.imshow(self.imgs[-1][0], 'gray')
+            # plt.title(img_name)
+            # f2 = plt.subplot(312)
+            # plt.imshow(self.masks[-1][0], 'gray')
+            # plt.title(mask_name)
+            # f3 = plt.subplot(313)
+            # plt.imshow(self.edges[-1][0], 'gray')
+            # plt.show()
+
+        # normalization     # TODO: sampling imgs to get mean and std, instead of all
         img_mean, img_std = self.get_mean(moving_sum), self.get_std(moving_sum)
         np.savez(self.im_path + '/train_mean_std.npz', mean=img_mean, std=img_std)
         self.imgs = (self.imgs - img_mean) / img_std
@@ -106,7 +123,7 @@ class DataPreparer:
 
     def get_generator(self):
         """get generators for training set and validation set"""
-        generator = ImageDataGenerator(rotation_range=30,
+        generator = ImageDataGenerator(rotation_range=90,
                                        horizontal_flip=True,
                                        vertical_flip=True,
                                        fill_mode='reflect')
@@ -130,6 +147,16 @@ class DataPreparer:
         gene_edge = generator.flow(edges_tr, batch_size=self.batch_size, seed=seed)
         out_gene = zip(gene_mask, gene_edge)
         train_generator = zip(gene_img, out_gene)
+
+        # # Visualize augmented crops
+        # for i in range(10):
+        #     img = gene_img.next()[i][:, :, 0]
+        #     mask = gene_mask.next()[i][:, :, 0]
+        #     f1 = plt.subplot(211)
+        #     plt.imshow(img, 'gray')
+        #     f2 = plt.subplot(212)
+        #     plt.imshow(mask, 'gray')
+        #     plt.show()
 
         gene_img = generator.flow(imgs_val, batch_size=self.batch_size, seed=seed)
         gene_mask = generator.flow(masks_val, batch_size=self.batch_size, seed=seed)
