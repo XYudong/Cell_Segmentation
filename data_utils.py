@@ -2,14 +2,13 @@ import numpy as np
 import os
 import cv2
 import glob
-import tensorflow as tf
 from tensorflow.python.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 
 
 class DataPreparer:
     CROP_SIZE = 128
-    MARGIN = 30
+    MARGIN = 30         # (128 - 68) / 2
     SPLIT_RATE = 0.2
 
     def __init__(self, im_path, mask_path, crop_num=200, batch_size=32):
@@ -19,20 +18,17 @@ class DataPreparer:
         self.imgs = []
         self.masks = []
         self.edges = []
+        self.img_list = []      # for file names
+        self.mask_list = []
         self.batch_size = batch_size
-        self.num_train = 0
-        self.num_val = 0
+        self.num_train = None
+        self.num_val = None
 
     def load_img_mask(self):
         """load images and masks from disk and get edges"""
-        img_list = glob.glob(os.path.join(self.im_path, '*.tif'))
-        mask_list = glob.glob(os.path.join(self.mask_path, '*.png'))
-
-        for i in range(len(img_list)):
-            self.imgs.append(cv2.imread(img_list[i], 0))
-            self.masks.append(cv2.imread(mask_list[i], 0))
-            self.get_edge(self.masks[-1])
-        assert len(self.imgs) == len(self.edges) == len(self.masks), 'inconsistent number of inputs and outputs'
+        self.img_list = glob.glob(os.path.join(self.im_path, '*.tif'))
+        self.mask_list = glob.glob(os.path.join(self.mask_path, '*.png'))
+        assert len(self.img_list) == len(self.mask_list), 'inconsistent number of imgs and masks'
         return
 
     def get_edge(self, mask):
@@ -41,11 +37,10 @@ class DataPreparer:
         edg = cv2.Canny(mask, 50, 100)
         kernel = np.ones((3, 3), np.uint8)
         edg = cv2.dilate(edg, kernel, iterations=3)     # needs tuning
-        self.edges.append(edg)
-        return
+        return edg
 
     def crop_on_loc(self, inp, rows, cols):
-        """crop given input according to rows and cols, cropping size is related to CROP_SIZE"""
+        """crop given input at rows and cols, cropping size: CROP_SIZE x CROP_SIZE"""
         out = []
         offset0 = int(self.CROP_SIZE / 2)
         offset1 = self.CROP_SIZE - offset0
@@ -67,9 +62,14 @@ class DataPreparer:
         edge_num = int(self.crop_num * edge_ratio)
         back_num = self.crop_num - edge_num
         pad_width = int(np.ceil(self.CROP_SIZE / 2))
+        moving_sum = []
 
-        imgs, masks, edges = [], [], []
-        for img, mask, edge in zip(self.imgs, self.masks, self.edges):
+        for img_name, mask_name in zip(self.img_list, self.mask_list):
+            img = cv2.imread(img_name, 0).astype('float32')
+            mask = cv2.imread(mask_name, 0)
+            edge = self.get_edge(mask)
+            moving_sum.append(img)
+
             row_p, col_p = self.sample_loc(edge, edge_num, True)
             row_n, col_n = self.sample_loc(edge, back_num, False)
             rows = np.hstack((row_p, row_n)) + pad_width
@@ -79,27 +79,24 @@ class DataPreparer:
             mask = np.lib.pad(mask, pad_width, 'symmetric')
             edge = np.lib.pad(edge, pad_width, 'symmetric')
 
-            imgs.append(self.crop_on_loc(img, rows, cols))
-            masks.append(self.crop_on_loc(mask, rows, cols))
-            edges.append(self.crop_on_loc(edge, rows, cols))
+            self.imgs.append(self.crop_on_loc(img, rows, cols))
+            self.masks.append(self.crop_on_loc(mask, rows, cols))
+            self.edges.append(self.crop_on_loc(edge, rows, cols))
 
-        # self.imgs = np.stack(imgs, axis=2).reshape((-1, self.CROP_SIZE, self.CROP_SIZE)).astype('float32')
-        self.imgs = np.concatenate(imgs, axis=0).astype('float32')
-        self.masks = self.crop_margin(masks)
-        self.edges = self.crop_margin(edges)
+        # normalization
+        img_mean, img_std = self.get_mean(moving_sum), self.get_std(moving_sum)
+        np.savez(self.im_path + '/train_mean_std.npz', mean=img_mean, std=img_std)
+        self.imgs = (self.imgs - img_mean) / img_std
+
+        self.imgs = np.concatenate(self.imgs, axis=0)
+        self.masks = self.crop_margin(self.masks)
+        self.edges = self.crop_margin(self.edges)
         return
 
     def crop_margin(self, inp):
         """cut out given MARGIN from the inp"""
         inp = np.concatenate(inp, axis=0).astype('float32')
         return inp[:, self.MARGIN:-self.MARGIN, self.MARGIN:-self.MARGIN]
-
-    # def get_dataset(self):
-    #     """turn data into tf.data.Dataset"""
-    #     input_set = tf.data.Dataset.from_tensor_slices(self.imgs)
-    #     output_set = tf.data.Dataset.from_tensor_slices((self.masks, self.edges))
-    #     dataset = tf.data.Dataset.zip((input_set, output_set))
-    #     return dataset.batch(self.batch_size).repeat().prefetch(1)
 
     def binarize_mask_edge(self):
         # need the operand to be float type
@@ -108,18 +105,19 @@ class DataPreparer:
         return
 
     def get_generator(self):
-        generator = ImageDataGenerator(rotation_range=90,
-                                       zoom_range=0.3,
+        """get generators for training set and validation set"""
+        generator = ImageDataGenerator(rotation_range=30,
                                        horizontal_flip=True,
                                        vertical_flip=True,
                                        fill_mode='reflect')
         # preprocessing
         self.binarize_mask_edge()
-        self.imgs = (self.imgs - self.get_mean()) / self.get_std()   # zero-mean or normalization?
-        self.imgs = self.add_axis(self.imgs).repeat(3, axis=-1)
+
+        self.imgs = self.add_axis(self.imgs, repeat=True)
         self.masks = self.add_axis(self.masks)
         self.edges = self.add_axis(self.edges)
         seed = 66
+        # split data
         imgs_tr, imgs_val, masks_tr, masks_val, edges_tr, edges_val\
             = train_test_split(self.imgs, self.masks, self.edges,
                                test_size=self.SPLIT_RATE, random_state=seed)
@@ -141,17 +139,18 @@ class DataPreparer:
 
         return train_generator, val_generator
 
-    def add_axis(self, img):
-        return img[..., np.newaxis]
+    def add_axis(self, img, repeat=False):
+        img = img[..., np.newaxis]
+        return img if not repeat else img.repeat(3, axis=-1)
 
-    def get_mean(self):
-        return np.mean(self.imgs)
+    def get_mean(self, imgs):
+        return np.mean(imgs)
 
-    def get_std(self):
-        return np.std(self.imgs)
+    def get_std(self, imgs):
+        return np.std(imgs)
 
-    # def get_num(self):
-    #     return int(len(self.imgs) * self.SPLIT_RATE)
+    def save_mean_std(self):
+        pass
 
     def main(self):
         self.load_img_mask()
