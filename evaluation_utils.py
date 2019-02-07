@@ -19,6 +19,15 @@ def dice_coef(y_true, y_pred):
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
 
+def get_edge(mask, iter=3):
+    """detect edges from input mask"""
+    mask[mask > 0.5] = 255
+    edg = cv2.Canny(mask, 50, 150)
+    kernel = np.ones((3, 3), np.uint8)
+    edg = cv2.dilate(edg, kernel, iterations=iter)     # needs tuning
+    return edg
+
+
 class SegPreparer:
     INPUT_SIZE = 128    # input size of our Unet
     OUTPUT_SIZE = 68
@@ -79,7 +88,7 @@ class SegPreparer:
 
                 # mask and edge
                 mask = cv2.imread(mask_name, 0)
-                edge = self.get_edge(mask)
+                edge = get_edge(mask)
 
                 mask = self.pad_each(mask, 0)
                 mask = self.crop_each(mask, self.OUTPUT_SIZE)
@@ -95,14 +104,6 @@ class SegPreparer:
                 img = self.crop_each(img, self.INPUT_SIZE)
                 self.imgs.append(img[..., np.newaxis].repeat(3, axis=-1))
         return
-
-    def get_edge(self, mask):
-        """detect edges from input mask"""
-        mask[mask > 0.5] = 255
-        edg = cv2.Canny(mask, 50, 100)
-        kernel = np.ones((3, 3), np.uint8)
-        edg = cv2.dilate(edg, kernel, iterations=3)     # needs tuning
-        return edg
 
     def pad_each(self, inp, extra_pad_width):
         inp = np.pad(inp, ((extra_pad_width, extra_pad_width + self.margin_y),
@@ -120,21 +121,21 @@ class SegPreparer:
                              col_start:col_start + size])
         return np.stack(crops, axis=0)      # (N, 128, 128) or (N, 68, 68)
 
-    def toImages(self, imgs, file_name):
-        """save masks or edges from Unet to images"""
-        # for f in range(self.num_test):
-        out = np.zeros((self.num_y * self.OUTPUT_SIZE, self.num_x * self.OUTPUT_SIZE))
-        imgs *= 255
-        for idx, img_crop in enumerate(imgs):
-            col = idx % self.num_x
-            row = np.floor(idx / self.num_x)
-            out[int(row * self.OUTPUT_SIZE): int((row + 1) * self.OUTPUT_SIZE),
-                int(col * self.OUTPUT_SIZE): int((col + 1) * self.OUTPUT_SIZE)]\
-                = img_crop.reshape((self.OUTPUT_SIZE, self.OUTPUT_SIZE)).astype('uint8')
-
-        cv2.imwrite(file_name, out[:self.shape[0], :self.shape[1]])
-        print('image saved')
-        return
+    # def toImages(self, imgs, file_name):
+        # """save masks or edges from Unet to images"""
+        # # for f in range(self.num_test):
+        # out = np.zeros((self.num_y * self.OUTPUT_SIZE, self.num_x * self.OUTPUT_SIZE))
+        # imgs *= 255
+        # for idx, img_crop in enumerate(imgs):
+        #     col = idx % self.num_x
+        #     row = np.floor(idx / self.num_x)
+        #     out[int(row * self.OUTPUT_SIZE): int((row + 1) * self.OUTPUT_SIZE),
+        #         int(col * self.OUTPUT_SIZE): int((col + 1) * self.OUTPUT_SIZE)]\
+        #         = img_crop.reshape((self.OUTPUT_SIZE, self.OUTPUT_SIZE)).astype('uint8')
+        #
+        # cv2.imwrite(file_name, out[:self.shape[0], :self.shape[1]])
+        # print('image saved')
+        # return
 
     def get_crops(self):
         self.load_test_set()
@@ -149,7 +150,7 @@ class SegPreparer:
             return self.imgs, self.masks, self.edges     # arrays, for evaluation
 
     def get_imgs(self):
-        # TODO: save multiple images
+        """get each image in whole instead of crops"""
         self.load_test_set()
         mean, std = self.get_stats(self.stats_path)     # images stats from training set
         imgs = []
@@ -164,7 +165,7 @@ class SegPreparer:
             for img_name, mask_name in zip(self.img_list, self.mask_list):
                 img = (cv2.imread(img_name, 0) - mean) / std
                 mask = cv2.imread(mask_name, 0)
-                edge = self.get_edge(mask) / 255
+                edge = get_edge(mask) / 255
                 mask = mask / 255                   # model target should be binary mask!
 
                 imgs.append(img[:, 0:-8, np.newaxis].repeat(3, axis=-1))    # model input
