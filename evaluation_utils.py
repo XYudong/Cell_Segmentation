@@ -1,5 +1,5 @@
 import numpy as np
-import os
+from os import listdir, path
 import cv2
 import glob
 from tensorflow.python.keras import backend as K
@@ -28,6 +28,12 @@ def get_edge(mask, iter=3):
     return edg
 
 
+def get_filename(file_path):
+    """get only file names in the input directory"""
+    files = [f for f in listdir(file_path) if path.isfile((path.join(file_path, f)))]
+    return sorted(files)
+
+
 class SegPreparer:
     INPUT_SIZE = 128    # input size of our Unet
     OUTPUT_SIZE = 68
@@ -50,13 +56,14 @@ class SegPreparer:
 
     def load_test_set(self):
         """load test set from disk"""
-        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.tif')))
+        self.img_list = sorted(glob.glob(path.join(self.im_path, '*.tif')))
         self.num_test = len(self.img_list)
+        assert self.num_test > 0, "empty test set: " + str(self.num_test)
         print(self.img_list)
         print(self.num_test, ' images')
 
         if self._mask_path is not None:
-            self.mask_list = sorted(glob.glob(os.path.join(self._mask_path, '*.png')))
+            self.mask_list = sorted(glob.glob(path.join(self._mask_path, '*.png')))
             assert len(self.mask_list) == self.num_test, "different number of test images and masks"
         return
 
@@ -138,6 +145,7 @@ class SegPreparer:
         # return
 
     def get_crops(self):
+        """get crops of an image"""
         self.load_test_set()
         self.crop_all()
         if self._mask_path is None:

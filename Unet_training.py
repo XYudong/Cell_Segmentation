@@ -102,7 +102,7 @@ def train_Unet(dataset, lr, epochs):
     # callbacks
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5,
                                   patience=4, verbose=1, min_lr=1e-6)
-    model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_08.hdf5',
+    model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_00.hdf5',
                                        monitor='val_loss',
                                        save_best_only=True,
                                        verbose=1)
@@ -125,5 +125,5 @@ def train_Unet(dataset, lr, epochs):
 
 
 if __name__ == '__main__':
-    dataset = 'FAK_N1'
+    dataset = 'FAK_N2'
     train_Unet(dataset, lr=1e-3, epochs=11)

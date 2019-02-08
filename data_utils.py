@@ -60,18 +60,28 @@ class DataPreparer:
         sample_idx = np.random.choice(np.arange(len(loc[0])), size=number, replace=False)  # guarantee uniqueness
         return loc[0][sample_idx], loc[1][sample_idx]
 
+    def get_stats(self):
+        """get mean and std of training set by sampling"""
+        num_samples = self.num_train if self.num_train < 10 else 10
+        sub_img_list = np.random.choice(self.img_list, size=num_samples, replace=False)
+        imgs = []
+        for img_name in sub_img_list:
+            imgs.append(cv2.imread(img_name, 0))
+
+        im_mean = np.mean(imgs)
+        im_std = np.std(imgs)
+        return im_mean, im_std
+
     def crop_all(self):
         edge_ratio = 0.6
         edge_num = int(self.crop_num * edge_ratio)
         other_num = self.crop_num - edge_num
         pad_width = int(np.ceil(self.CROP_SIZE / 2))
-        moving_sum = []
 
         for img_name, mask_name in zip(self.img_list, self.mask_list):
             img = cv2.imread(img_name, 0).astype('float32')
             mask = cv2.imread(mask_name, 0)
             edge = self.get_edge(mask)
-            moving_sum.append(img)
 
             # sampling crop centers
             row_p, col_p = self.sample_loc(edge, edge_num, True)
@@ -100,8 +110,8 @@ class DataPreparer:
             # plt.imshow(self.edges[-1][0], 'gray')
             # plt.show()
 
-        # normalization     # TODO: sampling imgs to get mean and std, instead of all
-        img_mean, img_std = self.get_mean(moving_sum), self.get_std(moving_sum)
+        # normalization
+        img_mean, img_std = self.get_stats()
         np.savez(self.im_path + '/train_mean_std.npz', mean=img_mean, std=img_std)
         self.imgs = (self.imgs - img_mean) / img_std
 
