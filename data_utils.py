@@ -62,7 +62,7 @@ class DataPreparer:
 
     def get_stats(self):
         """get mean and std of training set by sampling"""
-        num_samples = self.num_train if self.num_train < 10 else 10
+        num_samples = len(self.img_list) if len(self.img_list) < 10 else 10
         sub_img_list = np.random.choice(self.img_list, size=num_samples, replace=False)
         imgs = []
         for img_name in sub_img_list:

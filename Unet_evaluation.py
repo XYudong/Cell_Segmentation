@@ -1,22 +1,10 @@
 from evaluation_utils import *
 import numpy as np
 import cv2
-from skimage import color
 import matplotlib.pyplot as plt
 import tensorflow as tf
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.models import Model
-
-
-# initialization
-raw_im_path = 'DataSet_label/FAK_N4/Bright_Field'
-gt_mask_path = 'DataSet_label/FAK_N4/GFP_MASK_PNG'
-pred_mask_path = 'results/predict/FAK_N4/N1_model_08/predMask'
-rawAndMask_path = 'results/predict/FAK_N4/N1_model_08/rawAndMask'
-rawAndEdge_path = 'results/predict/FAK_N4/N1_model_08/rawAndEdges'
-
-train_stats_path = 'DataSet_label/FAK_N1/img/train_mean_std.npz'
-batch_size = 16
 
 
 def get_model(model_name):
@@ -49,10 +37,10 @@ def evaluate_model(model_name, out_path=None):
         outputs.append(output)
 
     outputs = np.mean(outputs, axis=0)
-    print('average loss and coef: ', outputs)
+    print('\naverage loss and coef: ', outputs)
     if out_path is not None:
         loss, mask_loss, edge_loss, mask_coef, edge_coef = outputs
-        file_path = out_path + '/eval_FAK_N1_model08.npz'
+        file_path = out_path + '/eval_' + model_name[6:-5]
         np.savez(file_path,
                  loss=loss, mask_loss=mask_loss, edge_loss=edge_loss,
                  mask_coef=mask_coef, edge_coef=edge_coef)
@@ -78,11 +66,17 @@ def predict_mask_v2(model_name, out_path=None):
     pred_masks = postprocess(pred_masks)
     # pred_edges = postprocess(pred_edges)
 
+    img_names = get_filename(raw_im_path)
     if out_path is not None:
-        img_names = get_filename(raw_im_path)
-        for img_name, mask, edge in zip(img_names, pred_masks, pred_edges):
-            save_img(mask, out_path + '/predMask_' + img_name[0:-21] + '.png')
+        for name, mask, edge in zip(img_names, pred_masks, pred_edges):
+            save_img(mask, out_path + '/predMask_' + name[0:-21] + '.png')
             # save_img(edge, out_path + '/predEdge_' + img_name[0:-21] + '.png')
+    else:
+        for name, mask in zip(img_names, pred_masks):
+            plt.figure()
+            plt.imshow(mask, 'gray')
+            plt.title(name)
+            plt.show()
     return
 
 
@@ -130,12 +124,12 @@ def overlay_img_mask(imgs_path, pred_masks_path, out_path=None):
 
     for i_path, m_path, img_name in zip(preparer.img_list, preparer.mask_list, img_names):
         img = cv2.imread(i_path, 0)
-        img = color.gray2rgb(img)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
         mask = cv2.imread(m_path, 0)
         regions = mask > 0
 
-        channel_multiplier = [0, 0, 2]
+        channel_multiplier = [2, 0, 0]
         img = img.astype('float32')
         img[regions, :] *= channel_multiplier
 
@@ -143,7 +137,7 @@ def overlay_img_mask(imgs_path, pred_masks_path, out_path=None):
             save_img(img.astype('uint8'), out_path + '/rawAndMask_' + img_name[0:-21] + '.png')
         else:
             plt.figure()
-            plt.imshow(img, 'gray')
+            plt.imshow(img.astype('uint8'))
             plt.show()
 
     return
@@ -166,7 +160,7 @@ def overlay_img_gt_mask(imgs_path, gt_masks_path, pred_masks_path, out_path):
         gt_mask = cv2.imread(gt_m_path, 0)
         pred_mask = cv2.imread(pred_m_path, 0)
 
-        raw_img = color.gray2rgb(raw_img).astype('float32')
+        raw_img = cv2.cvtColor(raw_img, cv2.COLOR_GRAY2BGR)
 
         channel_addend0 = [0, 0, 250]   # gt            # [b, g, r] for cv2.imwrite()
         channel_addend1 = [0, 250, 0]   # pred
@@ -189,6 +183,9 @@ def overlay_img_gt_mask(imgs_path, gt_masks_path, pred_masks_path, out_path):
 
 
 def overlay_edg(background, inp, addend):
+    if background.dtype != 'float32':
+        background = background.astype('float32')
+
     inp_edge = get_edge(inp, iter=1)
     edge_region = inp_edge > 0
 
@@ -198,14 +195,23 @@ def overlay_edg(background, inp, addend):
 
 
 if __name__ == '__main__':
-    model_name = 'vUnet_FAK_N1_08.hdf5'
+    # initialization
+    model_name = 'vUnet_FAK_N3_00.hdf5'
+    raw_im_path = 'DataSet_label/FAK_N3/test'
+    gt_mask_path = 'DataSet_label/FAK_N3/test_mask'
+    pred_mask_path = 'results/predict/FAK_N3/N3_model_00/predMask'
+    rawAndEdge_path = 'results/predict/FAK_N3/N3_model_00/rawAndEdges'
+    train_stats_path = 'DataSet_label/FAK_N3/train/train_mean_std.npz'
+    batch_size = 16
 
-    evaluate_model(model_name, out_path=pred_mask_path)
+    # # get the loss and coef on Test set
+    # evaluate_model(model_name, out_path=pred_mask_path)
 
     # # overlay raw image with edges of predicted mask and gt_mask
     # predict_mask_v2(model_name, out_path=pred_mask_path)
     # overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
-    # overlay_img_mask(raw_im_path, pred_mask_path, rawAndMask_path)
+    # rawAndMask_path = 'results/predict/FAK_N3/N1_model_08/rawAndMask'
+    overlay_img_mask(raw_im_path, pred_mask_path)
 

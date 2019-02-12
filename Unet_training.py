@@ -75,16 +75,14 @@ def new_Unet(model_flag='vUnet'):
 
 
 def train_Unet(dataset, lr, epochs):
-    im_path = './DataSet_label/FAK_N1/img'
-    mask_path = './DataSet_label/FAK_N1/mask'
+    im_path = './DataSet_label/' + dataset + '/train'
+    mask_path = './DataSet_label/' + dataset + '/train_mask'
     batch_size = 32
 
-    data = DataPreparer(im_path, mask_path, batch_size=batch_size)
-    train_generator, val_generator = data.main()
-    num_train = data.num_train
-    num_val = data.num_val
-    print('num of training data: ', num_train)
-    print('num of validation data: ', num_val)
+    data_getter = DataPreparer(im_path, mask_path, batch_size=batch_size)
+    train_generator, val_generator = data_getter.main()
+    num_train = data_getter.num_train
+    num_val = data_getter.num_val
 
     # build model
     model_flag = 'vUnet'
@@ -93,6 +91,9 @@ def train_Unet(dataset, lr, epochs):
         model.layers[i].trainable = False
 
     model.summary()
+    print('dataset: ', dataset)
+    print('num of training data: ', num_train)
+    print('num of validation data: ', num_val)
 
     # compile
     model.compile(optimizer=Adam(lr),
@@ -101,15 +102,15 @@ def train_Unet(dataset, lr, epochs):
                   loss_weights=[0.9999, 0.0001])
     # callbacks
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5,
-                                  patience=4, verbose=1, min_lr=1e-6)
+                                  patience=3, verbose=1, min_lr=1e-6)
     model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_00.hdf5',
                                        monitor='val_loss',
                                        save_best_only=True,
                                        verbose=1)
-    tensorboard = TensorBoard(log_dir='./log/' + dataset + '/02',
+    tensorboard = TensorBoard(log_dir='./log/' + dataset + '/00',
                               write_graph=False,
                               write_grads=True,
-                              histogram_freq=5,
+                              histogram_freq=10,
                               batch_size=batch_size)
     # train
     hist = model.fit_generator(train_generator,
@@ -125,5 +126,5 @@ def train_Unet(dataset, lr, epochs):
 
 
 if __name__ == '__main__':
-    dataset = 'FAK_N2'
-    train_Unet(dataset, lr=1e-3, epochs=11)
+    dataset = 'FAK_N4'
+    train_Unet(dataset, lr=2e-3, epochs=26)
