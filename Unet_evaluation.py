@@ -7,6 +7,9 @@ from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.models import Model
 
 
+THRESHOLD = 100     # threshold for predicted mask
+
+
 def get_model(model_name):
     """build a model from saved model with the new input shape"""
     model = tf.keras.models.load_model('./results/model/' + model_name,
@@ -29,7 +32,7 @@ def evaluate_model(model_name, out_path=None):
     model.compile(optimizer='adam',
                   loss=['binary_crossentropy', 'binary_crossentropy'],  # mask, edge
                   metrics=[dice_coef],
-                  loss_weights=[0.9999, 0.0001])
+                  loss_weights=[0.999, 0.001])
     outputs = []
     for img, mask, edge in zip(imgs, masks, edges):
         output = model.evaluate(img[np.newaxis, ...], [mask[np.newaxis, ...], edge[np.newaxis, ...]])
@@ -102,7 +105,9 @@ def postprocess(imgs):
     """post-process predicted masks/edges; imgs: a list of arrays"""
     imgs = np.concatenate(imgs, axis=0)
     assert np.max(imgs) <= 1, 'input img is not gray-scale image'
+
     imgs *= 255
+    # imgs[imgs < THRESHOLD] = 0      # threshold
 
     MARGIN = 30  # because of Cropping2D layer
     imgs = np.pad(imgs[:, :, :, 0], ((0,), (MARGIN,), (MARGIN,)), 'symmetric').astype('uint8')
@@ -196,12 +201,12 @@ def overlay_edg(background, inp, addend):
 
 if __name__ == '__main__':
     # initialization
-    model_name = 'vUnet_FAK_N3_00.hdf5'
-    raw_im_path = 'DataSet_label/FAK_N3/test'
-    gt_mask_path = 'DataSet_label/FAK_N3/test_mask'
-    pred_mask_path = 'results/predict/FAK_N3/N3_model_00/predMask'
-    rawAndEdge_path = 'results/predict/FAK_N3/N3_model_00/rawAndEdges'
-    train_stats_path = 'DataSet_label/FAK_N3/train/train_mean_std.npz'
+    model_name = 'vUnet_FAK_N4_01.hdf5'
+    raw_im_path = 'DataSet_label/FAK_N4/test'
+    gt_mask_path = 'DataSet_label/FAK_N4/test_mask'
+    pred_mask_path = 'results/predict/FAK_N4/N4_model_01/predMask'
+    rawAndEdge_path = 'results/predict/FAK_N4/N4_model_01/rawAndEdges'
+    train_stats_path = 'DataSet_label/FAK_N4/train/train_mean_std.npz'
     batch_size = 16
 
     # # get the loss and coef on Test set
@@ -209,9 +214,9 @@ if __name__ == '__main__':
 
     # # overlay raw image with edges of predicted mask and gt_mask
     # predict_mask_v2(model_name, out_path=pred_mask_path)
-    # overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
+    overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
     # rawAndMask_path = 'results/predict/FAK_N3/N1_model_08/rawAndMask'
-    overlay_img_mask(raw_im_path, pred_mask_path)
+    # overlay_img_mask(raw_im_path, pred_mask_path)
 
