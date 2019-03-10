@@ -55,8 +55,8 @@ class SegPreparer:
         self.num_test = None    # number of test images
 
     def load_test_set(self):
-        """load test set from disk"""
-        self.img_list = sorted(glob.glob(path.join(self.im_path, '*.tif')))
+        """load test set image names"""
+        self.img_list = sorted(glob.glob(path.join(self.im_path, '*.png')))
         self.num_test = len(self.img_list)
         assert self.num_test > 0, "empty test set: " + str(self.num_test)
         print(self.img_list)
@@ -164,7 +164,8 @@ class SegPreparer:
         imgs = []
         if self._mask_path is None:
             for img_name in self.img_list:
-                img = (cv2.imread(img_name, 0) - mean) / std
+                img = cv2.resize(cv2.imread(img_name, 0), (1128, 832))
+                img = (img - mean) / std
                 imgs.append(img[:, 0:-8, np.newaxis].repeat(3, axis=-1))
             return np.stack(imgs, axis=0)   # (N, 832, 1128-8, 3)
         else:

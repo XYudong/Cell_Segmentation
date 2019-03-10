@@ -52,7 +52,7 @@ def evaluate_model(model_name, out_path=None):
 
 
 def predict_mask_v2(model_name, out_path=None):
-    """input the images in whole"""
+    """input the images as a whole"""
     print('pre-trained model: ', model_name)
     test_preparer = SegPreparer(raw_im_path, train_stats_path)
     imgs = test_preparer.get_imgs()
@@ -201,11 +201,11 @@ def overlay_edg(background, inp, addend):
 
 if __name__ == '__main__':
     # initialization
-    model_name = 'vUnet_FAK_N4_01.hdf5'
-    raw_im_path = 'DataSet_label/FAK_N4/test'
-    gt_mask_path = 'DataSet_label/FAK_N4/test_mask'
-    pred_mask_path = 'results/predict/FAK_N4/N4_model_01/predMask'
-    rawAndEdge_path = 'results/predict/FAK_N4/N4_model_01/rawAndEdges'
+    model_name = 'vUnet_FAK_N1_08.hdf5'
+    raw_im_path = 'DataSet_label/Human_Muscle_PF573228/sample_test'
+    # gt_mask_path = 'DataSet_label/FAK_N4/test_mask'
+    # pred_mask_path = 'results/predict/FAK_N4/N4_model_01/predMask'
+    # rawAndEdge_path = 'results/predict/FAK_N4/N4_model_01/rawAndEdges'
     train_stats_path = 'DataSet_label/FAK_N4/train/train_mean_std.npz'
     batch_size = 16
 
@@ -213,8 +213,8 @@ if __name__ == '__main__':
     # evaluate_model(model_name, out_path=pred_mask_path)
 
     # # overlay raw image with edges of predicted mask and gt_mask
-    # predict_mask_v2(model_name, out_path=pred_mask_path)
-    overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
+    predict_mask_v2(model_name, out_path=None)
+    # overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
     # rawAndMask_path = 'results/predict/FAK_N3/N1_model_08/rawAndMask'

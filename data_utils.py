@@ -12,7 +12,7 @@ class DataPreparer:
     MARGIN = 30         # (128 - 68) / 2
     SPLIT_RATE = 0.2
 
-    def __init__(self, im_path, mask_path, crop_num=200, batch_size=32):
+    def __init__(self, im_path, mask_path=None, crop_num=200, batch_size=32):
         self.im_path = im_path
         self.mask_path = mask_path
         self.crop_num = crop_num
@@ -25,14 +25,22 @@ class DataPreparer:
         self.num_train = None
         self.num_val = None
 
-    def load_img_mask(self):
+    def load_img(self):
         """load images and masks from disk and get edges"""
         self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.tif')))
+
+        if len(self.img_list) == 0:
+            raise ValueError('there is no matching file in ' + self.im_path)
+        if self.mask_list:
+            assert len(self.img_list) == len(self.mask_list), 'inconsistent number of imgs and masks'
+
+    def load_mask(self):
         self.mask_list = sorted(glob.glob(os.path.join(self.mask_path, '*.png')))
-        # print(self.img_list)
-        # print(self.mask_list)
-        assert len(self.img_list) == len(self.mask_list), 'inconsistent number of imgs and masks'
-        return
+
+        if len(self.mask_list) == 0:
+            raise ValueError('there is no matching file in ' + self.mask_path)
+        if self.img_list:
+            assert len(self.img_list) == len(self.mask_list), 'inconsistent number of imgs and masks'
 
     def get_edge(self, mask):
         """detect edges from input mask"""
@@ -189,17 +197,37 @@ class DataPreparer:
     def save_mean_std(self):
         pass
 
+    def to_grey(self, savepath, stats_file):
+        if not self.img_list:
+            raise ValueError("img_list is empty")
+        else:
+            # plt.figure()
+            for name in self.img_list:
+                img = cv2.imread(name, 0)
+                img = cv2.resize(img, (1128, 832))
+                # img = self.normalize_grey(img, stats_file)
+                filename = os.path.splitext(os.path.basename(name))[0] + '.png'
+                cv2.imwrite(os.path.join(savepath, filename), img)
+
+                # plt.imshow(img, 'gray')
+                # plt.show()
+
     def main(self):
-        self.load_img_mask()
+        self.load_img()
+        self.load_mask()
         self.crop_all()
         gene = self.get_generator()
         return gene
 
 
+if __name__ == '__main__':
+    img_path = 'DataSet_label/Human_Muscle_PF573228/ML_speroids/raw_images/48h/N1'
+    out_path = 'DataSet_label/Human_Muscle_PF573228/ML_speroids/raw_images/48h/N1_Gray'
+    stats_path = 'DataSet_label/FAK_N1/train/train_mean_std.npz'
 
-
-
-
+    ob = DataPreparer(img_path)
+    ob.load_img()
+    ob.to_grey(out_path, stats_path)
 
 
 

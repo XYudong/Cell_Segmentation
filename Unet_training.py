@@ -10,7 +10,7 @@ from tensorflow.python.keras import backend as K
 tf.keras.backend.set_image_data_format('channels_last')
 os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-# crop the original image(s) into this smaller square portions, which are resized to this value (68 pixels by 68 pixels)
+# crop this smaller square portions from the original image(s), which are resized to this value (68 pixels by 68 pixels)
 S_SIZE = 68
 # size (pixels) for padded (symmetric padding) result of smaller square portions
 L_SIZE = 128
