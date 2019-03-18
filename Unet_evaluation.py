@@ -2,6 +2,7 @@ from evaluation_utils import *
 import numpy as np
 import cv2
 import matplotlib.pyplot as plt
+from os import path
 import tensorflow as tf
 from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.models import Model
@@ -10,9 +11,9 @@ from tensorflow.python.keras.models import Model
 THRESHOLD = 100     # threshold for predicted mask
 
 
-def get_model(model_name):
+def get_model(model_file):
     """build a model from saved model with the new input shape"""
-    model = tf.keras.models.load_model('./results/model/' + model_name,
+    model = tf.keras.models.load_model(model_file,
                                        custom_objects={'dice_loss': dice_loss,
                                                        'dice_coef': dice_coef},
                                        compile=True)
@@ -28,7 +29,7 @@ def evaluate_model(model_name, out_path=None):
     test_preparer = SegPreparer(raw_im_path, train_stats_path, gt_mask_path)
     imgs, masks, edges = test_preparer.get_imgs()
 
-    model = get_model(model_name)
+    model = get_model(path.join(model_path, model_name))
     model.compile(optimizer='adam',
                   loss=['binary_crossentropy', 'binary_crossentropy'],  # mask, edge
                   metrics=[dice_coef],
@@ -57,7 +58,7 @@ def predict_mask_v2(model_name, out_path=None):
     test_preparer = SegPreparer(raw_im_path, train_stats_path)
     imgs = test_preparer.get_imgs()
 
-    model = get_model(model_name)
+    model = get_model(path.join(model_path, model_name))
     pred_masks = []
     pred_edges = []
     print('predicting...')
@@ -72,7 +73,8 @@ def predict_mask_v2(model_name, out_path=None):
     img_names = get_filename(raw_im_path)
     if out_path is not None:
         for name, mask, edge in zip(img_names, pred_masks, pred_edges):
-            save_img(mask, out_path + '/predMask_' + name[0:-21] + '.png')
+            # print(name)
+            save_img(mask, out_path + '/predMask_' + name)
             # save_img(edge, out_path + '/predEdge_' + img_name[0:-21] + '.png')
     else:
         for name, mask in zip(img_names, pred_masks):
@@ -110,8 +112,8 @@ def postprocess(imgs):
     # imgs[imgs < THRESHOLD] = 0      # threshold
 
     MARGIN = 30  # because of Cropping2D layer
-    imgs = np.pad(imgs[:, :, :, 0], ((0,), (MARGIN,), (MARGIN,)), 'symmetric').astype('uint8')
-    imgs = np.pad(imgs, ((0, 0), (0, 0), (0, 8)), 'symmetric')  # because of new input shape
+    imgs = np.pad(imgs[:, :, :, 0], ((0,), (MARGIN,), (MARGIN,)), 'constant').astype('uint8')
+    imgs = np.pad(imgs, ((0, 0), (0, 0), (0, 8)), 'constant')  # because of new input shape
     return imgs
 
 
@@ -129,17 +131,17 @@ def overlay_img_mask(imgs_path, pred_masks_path, out_path=None):
 
     for i_path, m_path, img_name in zip(preparer.img_list, preparer.mask_list, img_names):
         img = cv2.imread(i_path, 0)
-        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
         mask = cv2.imread(m_path, 0)
         regions = mask > 0
 
-        channel_multiplier = [2, 0, 0]
+        channel_multiplier = [0, 1, 1.5]
         img = img.astype('float32')
         img[regions, :] *= channel_multiplier
 
         if out_path is not None:
-            save_img(img.astype('uint8'), out_path + '/rawAndMask_' + img_name[0:-21] + '.png')
+            save_img(img.astype('uint8'), out_path + '/rawAndMask_' + img_name)
         else:
             plt.figure()
             plt.imshow(img.astype('uint8'))
@@ -176,7 +178,7 @@ def overlay_img_gt_mask(imgs_path, gt_masks_path, pred_masks_path, out_path):
                         (10, 810), cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 0, 250], thickness=2)
             cv2.putText(raw_img, " Green: Predicted Mask",
                         (350, 810), cv2.FONT_HERSHEY_SIMPLEX, 1, [0, 250, 0], thickness=2)
-            save_img(raw_img.astype('uint8'), out_path + '/rawAndEdge_' + img_name[0:-21] + '.png')
+            save_img(raw_img.astype('uint8'), out_path + '/rawAndEdge_' + img_name)
         else:
             plt.figure()
             plt.imshow(raw_img.astype('uint8'))
@@ -201,22 +203,26 @@ def overlay_edg(background, inp, addend):
 
 if __name__ == '__main__':
     # initialization
-    model_name = 'vUnet_FAK_N1_08.hdf5'
-    raw_im_path = 'DataSet_label/Human_Muscle_PF573228/sample_test'
-    # gt_mask_path = 'DataSet_label/FAK_N4/test_mask'
-    # pred_mask_path = 'results/predict/FAK_N4/N4_model_01/predMask'
-    # rawAndEdge_path = 'results/predict/FAK_N4/N4_model_01/rawAndEdges'
-    train_stats_path = 'DataSet_label/FAK_N4/train/train_mean_std.npz'
-    batch_size = 16
+    model_name = 'vUnet_FAK_N4_Gray_03.hdf5'
+    model_path = 'results/model/Human_Muscle'
+    train_stats_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/img/train_mean_std.npz'
+
+    raw_im_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N6_Gray/'
+    gt_mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
+
+    pred_mask_path = 'results/predict/HM_FAK_N6/N4_model_03/predMask'
+    rawAndEdge_path = 'results/predict/HM_FAK_N6/N4_model_03/rawAndEdges'
+
+    # batch_size = 16
 
     # # get the loss and coef on Test set
     # evaluate_model(model_name, out_path=pred_mask_path)
 
     # # overlay raw image with edges of predicted mask and gt_mask
-    predict_mask_v2(model_name, out_path=None)
+    # predict_mask_v2(model_name, out_path=pred_mask_path)
     # overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
-    # rawAndMask_path = 'results/predict/FAK_N3/N1_model_08/rawAndMask'
-    # overlay_img_mask(raw_im_path, pred_mask_path)
+    rawAndMask_path = 'results/predict/HM_FAK_N6/N4_model_03/rawAndMask'
+    overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
 

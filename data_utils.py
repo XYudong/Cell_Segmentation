@@ -27,7 +27,7 @@ class DataPreparer:
 
     def load_img(self):
         """load images and masks from disk and get edges"""
-        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.tif')))
+        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.png')))
 
         if len(self.img_list) == 0:
             raise ValueError('there is no matching file in ' + self.im_path)
@@ -82,7 +82,7 @@ class DataPreparer:
 
     def crop_all(self):
         edge_ratio = 0.6
-        edge_num = int(self.crop_num * edge_ratio)
+        edge_num = int(self.crop_num * edge_ratio)      # number of crops centered at edges of the cell
         other_num = self.crop_num - edge_num
         pad_width = int(np.ceil(self.CROP_SIZE / 2))
 
@@ -212,6 +212,19 @@ class DataPreparer:
                 # plt.imshow(img, 'gray')
                 # plt.show()
 
+    def to_white(self, source):
+        # change mask values to 255
+        source = self.img_list if source == 'img' else self.mask_list
+        if not source:
+            raise ValueError(str(source) + " is empty")
+        else:
+            for name in source:
+                img = cv2.imread(name, 0)
+                img = cv2.resize(img, (1128, 832))
+                img[img > 0] = 255
+                filename = os.path.splitext(os.path.basename(name))[0] + '.png'
+                cv2.imwrite(os.path.join(out_path, filename), img)
+
     def main(self):
         self.load_img()
         self.load_mask()
@@ -221,19 +234,19 @@ class DataPreparer:
 
 
 if __name__ == '__main__':
-    img_path = 'DataSet_label/Human_Muscle_PF573228/ML_speroids/raw_images/48h/N1'
-    out_path = 'DataSet_label/Human_Muscle_PF573228/ML_speroids/raw_images/48h/N1_Gray'
+    img_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/img'
+    mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
+
+    out_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/temp'
     stats_path = 'DataSet_label/FAK_N1/train/train_mean_std.npz'
 
-    ob = DataPreparer(img_path)
-    ob.load_img()
-    ob.to_grey(out_path, stats_path)
+    ob = DataPreparer(img_path, mask_path)
+    # ob.load_img()
+    # ob.to_grey(out_path, stats_path)
+    # ob.to_white('img')
 
-
-
-
-
-
+    ob.load_mask()
+    ob.to_white('mask')
 
 
 

@@ -1,11 +1,10 @@
 import numpy as np
-import os
+from os import path
 import glob
 import cv2
 import matplotlib.pyplot as plt
 import heapq
-# import tensorflow as tf
-from data_utils import DataPreparer
+import tensorflow as tf
 
 # read_msk('DataSet_label/FAK_N1/img/C1_01_1_1_Bright Field_001.tif')
 
@@ -42,44 +41,30 @@ from data_utils import DataPreparer
 #     return out
 
 
-def extract_fea():
-    mask = cv2.imread('DataSet_label/FAK_N3/GFP_MASK_PNG/D2_01_2_1_GFP_001.png', 0)
-    contours, hierachy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-
-    img = cv2.imread('DataSet_label/FAK_N3/Bright_Field/D2_01_1_1_Bright Field_001.tif', 0)
-    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-
-    areas = []
-    for cnt in contours:
-        areas.append(cv2.contourArea(cnt))
-    idx = np.argsort(areas)[-2:]
-
-    cnt = contours[idx[0]]
-    img_contour = cv2.drawContours(img, [cnt], 0, (0, 250, 0), 3)
-    cnt = contours[idx[1]]
-    img_contour = cv2.drawContours(img_contour, [cnt], 0, (0, 0, 250), 3)
-
-    plt.figure()
-    plt.imshow(cv2.cvtColor(img_contour, cv2.COLOR_BGR2RGB))
-    plt.show()
-
-
 def test_fn():
-    img0 = cv2.imread('DataSet_label/FAK_N1/train/C1_01_1_1_Bright Field_001.tif', 0)
-    img1 = cv2.imread('DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/0001.png', 0)
+    # img0 = cv2.imread('DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/img/0001.png', 0)
+    # img1 = cv2.imread('DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/mask/0001_mask.png', 0)
+    # img2 = cv2.imread('test_img.png', 0)
+    #
+    # # img1[img1 > 0] = 255
+    # # cv2.imwrite('test_img.png', img1)
+    #
+    # plt.figure()
+    # plt.imshow(img0)
+    #
+    # plt.figure()
+    # plt.imshow(img1)
+    #
+    # # img3 = img1.copy()
+    # # img3[img3 > 1] = 30
+    # # plt.figure()
+    # # plt.imshow(img3, 'gray')
+    #
+    # plt.show()
 
-    plt.figure()
-    plt.imshow(img0, 'gray')
-
-    plt.figure()
-    plt.imshow(img1, 'gray')
-
-    img3 = img1.copy()
-    img3[img3 < 130] = 30
-    plt.figure()
-    plt.imshow(img3, 'gray')
-
-    plt.show()
+    hello = tf.constant('Hello, TensorFlow!')
+    sess = tf.Session()
+    print(sess.run(hello))
 
 
 if __name__ == '__main__':

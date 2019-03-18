@@ -21,8 +21,8 @@ def dice_coef(y_true, y_pred):
 
 def get_edge(mask, iter=3):
     """detect edges from input mask"""
-    mask[mask > 0.5] = 255
-    edg = cv2.Canny(mask, 50, 150)
+    # mask[mask < 30] = 0           # can filter out some small values
+    edg = cv2.Canny(mask, 80, 150)
     kernel = np.ones((3, 3), np.uint8)
     edg = cv2.dilate(edg, kernel, iterations=iter)     # needs tuning
     return edg

@@ -8,7 +8,7 @@ from tensorflow.python.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.python.keras import backend as K
 
 tf.keras.backend.set_image_data_format('channels_last')
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 # crop this smaller square portions from the original image(s), which are resized to this value (68 pixels by 68 pixels)
 S_SIZE = 68
@@ -74,11 +74,7 @@ def new_Unet(model_flag='vUnet'):
     return model
 
 
-def train_Unet(dataset, lr, epochs):
-    im_path = './DataSet_label/' + dataset + '/train'
-    mask_path = './DataSet_label/' + dataset + '/train_mask'
-    batch_size = 32
-
+def train_Unet(dataset, lr, epochs, trial_num):
     data_getter = DataPreparer(im_path, mask_path, batch_size=batch_size)
     train_generator, val_generator = data_getter.main()
     num_train = data_getter.num_train
@@ -99,15 +95,17 @@ def train_Unet(dataset, lr, epochs):
     model.compile(optimizer=Adam(lr),
                   loss=['binary_crossentropy', 'binary_crossentropy'],      # mask, edge
                   metrics=[dice_coef],
-                  loss_weights=[0.999, 0.001])
+                  loss_weights=[0.998, 0.002])
     # callbacks
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5,
-                                  patience=3, verbose=1, min_lr=1e-6)
-    model_checkpoint = ModelCheckpoint('results/model/vUnet_' + dataset + '_01.hdf5',
+                                  patience=5, verbose=1, min_lr=1e-6)
+
+    model_name = "results/model/human_muscle/vUnet_{0}_{1}.hdf5".format(dataset, trial_num)
+    model_checkpoint = ModelCheckpoint(model_name,
                                        monitor='val_loss',
                                        save_best_only=True,
                                        verbose=1)
-    tensorboard = TensorBoard(log_dir='./log/' + dataset + '/01',
+    tensorboard = TensorBoard(log_dir='./log/' + dataset + '/' + trial_num,
                               write_graph=False,
                               write_grads=False,
                               histogram_freq=10,
@@ -126,5 +124,9 @@ def train_Unet(dataset, lr, epochs):
 
 
 if __name__ == '__main__':
-    dataset = 'FAK_N4'
-    train_Unet(dataset, lr=2e-3, epochs=26)
+    batch_size = 32
+    dataset = 'FAK_N4_Gray'
+    im_path = 'DataSet_label/Human_Muscle_PF573228/' + dataset + '/train/img'
+    mask_path = 'DataSet_label/Human_Muscle_PF573228/' + dataset + '/train/mask'
+    for lr, num in zip([5e-4], ['03']):
+        train_Unet(dataset, lr=lr, epochs=60, trial_num=num)
