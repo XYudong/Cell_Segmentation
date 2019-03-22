@@ -27,7 +27,7 @@ class DataPreparer:
 
     def load_img(self):
         """load images and masks from disk and get edges"""
-        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.png')))
+        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.jpg')))
 
         if len(self.img_list) == 0:
             raise ValueError('there is no matching file in ' + self.im_path)
@@ -197,7 +197,7 @@ class DataPreparer:
     def save_mean_std(self):
         pass
 
-    def to_grey(self, savepath, stats_file):
+    def to_grey(self, savepath):
         if not self.img_list:
             raise ValueError("img_list is empty")
         else:
@@ -211,6 +211,7 @@ class DataPreparer:
 
                 # plt.imshow(img, 'gray')
                 # plt.show()
+            print('to_grey done')
 
     def to_white(self, source):
         # change mask values to 255
@@ -234,19 +235,19 @@ class DataPreparer:
 
 
 if __name__ == '__main__':
-    img_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/img'
-    mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
+    img_path = 'DataSet_label/Human_Muscle_PF573228/color/10.9.18 DMSO N=6'
+    # mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
 
-    out_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/temp'
+    out_path = 'DataSet_label/Human_Muscle_PF573228/DMSO_N6_Gray'
     stats_path = 'DataSet_label/FAK_N1/train/train_mean_std.npz'
 
-    ob = DataPreparer(img_path, mask_path)
-    # ob.load_img()
-    # ob.to_grey(out_path, stats_path)
+    ob = DataPreparer(img_path)
+    ob.load_img()
+    ob.to_grey(out_path)
     # ob.to_white('img')
 
-    ob.load_mask()
-    ob.to_white('mask')
+    # ob.load_mask()
+    # ob.to_white('mask')
 
 
 

@@ -2,6 +2,7 @@ from data_utils import *
 import tensorflow as tf
 from tensorflow.python.keras.applications.vgg16 import VGG16
 from tensorflow.python.keras import layers
+from tensorflow.python.keras.models import load_model
 from tensorflow.python.keras.optimizers import Adam
 from tensorflow.python.keras.initializers import VarianceScaling
 from tensorflow.python.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
@@ -74,28 +75,32 @@ def new_Unet(model_flag='vUnet'):
     return model
 
 
-def train_Unet(dataset, lr, epochs, trial_num):
+def train_Unet(dataset, lr, epochs, trial_num, model_path=None):
     data_getter = DataPreparer(im_path, mask_path, batch_size=batch_size)
     train_generator, val_generator = data_getter.main()
     num_train = data_getter.num_train
     num_val = data_getter.num_val
 
-    # build model
-    model_flag = 'vUnet'
-    model = new_Unet(model_flag)
-    for i in range(18):  # first 18 layers of pre-trained model
-        model.layers[i].trainable = False
+    # get model
+    if not model_path:
+        model_flag = 'vUnet'
+        model = new_Unet(model_flag)
+        for i in range(18):  # first 18 layers of pre-trained model
+            model.layers[i].trainable = False
 
-    model.summary()
-    print('dataset: ', dataset)
-    print('num of training data: ', num_train)
-    print('num of validation data: ', num_val)
+        model.summary()
+        print('dataset: ', dataset)
+        print('num of training data: ', num_train)
+        print('num of validation data: ', num_val)
 
-    # compile
-    model.compile(optimizer=Adam(lr),
-                  loss=['binary_crossentropy', 'binary_crossentropy'],      # mask, edge
-                  metrics=[dice_coef],
-                  loss_weights=[0.998, 0.002])
+        # compile
+        model.compile(optimizer=Adam(lr),
+                      loss=['binary_crossentropy', 'binary_crossentropy'],      # mask, edge
+                      metrics=[dice_coef],
+                      loss_weights=[0.998, 0.002])
+    else:
+        model = load_model(model_path)
+
     # callbacks
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5,
                                   patience=5, verbose=1, min_lr=1e-6)
@@ -118,8 +123,6 @@ def train_Unet(dataset, lr, epochs, trial_num):
                                callbacks=[reduce_lr, tensorboard, model_checkpoint],
                                validation_data=val_generator,
                                validation_steps=num_val // batch_size)
-    K.clear_session()
-
     return
 
 
@@ -128,5 +131,5 @@ if __name__ == '__main__':
     dataset = 'FAK_N4_Gray'
     im_path = 'DataSet_label/Human_Muscle_PF573228/' + dataset + '/train/img'
     mask_path = 'DataSet_label/Human_Muscle_PF573228/' + dataset + '/train/mask'
-    for lr, num in zip([5e-4], ['03']):
-        train_Unet(dataset, lr=lr, epochs=60, trial_num=num)
+    for lr, num in zip([5e-4], ['04']):
+        train_Unet(dataset, lr=lr, epochs=40, trial_num=num)

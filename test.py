@@ -42,43 +42,30 @@ import tensorflow as tf
 
 
 def test_fn():
-    # img0 = cv2.imread('DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/img/0001.png', 0)
-    # img1 = cv2.imread('DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/mask/0001_mask.png', 0)
-    # img2 = cv2.imread('test_img.png', 0)
-    #
-    # # img1[img1 > 0] = 255
-    # # cv2.imwrite('test_img.png', img1)
-    #
-    # plt.figure()
-    # plt.imshow(img0)
-    #
-    # plt.figure()
-    # plt.imshow(img1)
-    #
-    # # img3 = img1.copy()
-    # # img3[img3 > 1] = 30
-    # # plt.figure()
-    # # plt.imshow(img3, 'gray')
-    #
-    # plt.show()
+    # img0 = cv2.imread('results/predict/HM_FAK_N6/N4_model_03/predMask/predMask_0029.png', 0)
 
-    hello = tf.constant('Hello, TensorFlow!')
-    sess = tf.Session()
-    print(sess.run(hello))
+    img = np.zeros((100, 100)).astype(np.uint8)
+    cv2.circle(img, (50, 50), 20, 1, thickness=-1)
+    cv2.circle(img, (50, 50), 10, 0, thickness=-1)
+
+    cnts, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    areas = [cv2.contourArea(c) for c in cnts]
+    print(areas)
+
+    print(np.pi * 10**2)
+    print(np.pi * 20**2)
+
+    plt.figure()
+    plt.imshow(img, 'gray')
+
+    plt.show()
 
 
 if __name__ == '__main__':
     # extract_fea()
-    test_fn()
-
-
-
-
-
-
-
-
-
+    # test_fn()
+    a = [-2, 2]
+    print(np.linalg.norm(a))
 
 
 

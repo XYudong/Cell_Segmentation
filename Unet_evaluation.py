@@ -207,11 +207,11 @@ if __name__ == '__main__':
     model_path = 'results/model/Human_Muscle'
     train_stats_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/img/train_mean_std.npz'
 
-    raw_im_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N6_Gray/'
-    gt_mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
+    raw_im_path = 'DataSet_label/Human_Muscle_PF573228/DMSO_N6_Gray'
+    # gt_mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
 
-    pred_mask_path = 'results/predict/HM_FAK_N6/N4_model_03/predMask'
-    rawAndEdge_path = 'results/predict/HM_FAK_N6/N4_model_03/rawAndEdges'
+    pred_mask_path = 'results/predict/HM_DMSO_N6/N1_model_08/predMask'
+    # rawAndEdge_path = 'results/predict/HM_DMSO_N4/N4_model_03/rawAndEdges'
 
     # batch_size = 16
 
@@ -219,10 +219,10 @@ if __name__ == '__main__':
     # evaluate_model(model_name, out_path=pred_mask_path)
 
     # # overlay raw image with edges of predicted mask and gt_mask
-    # predict_mask_v2(model_name, out_path=pred_mask_path)
+    predict_mask_v2(model_name, out_path=pred_mask_path)
     # overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
-    rawAndMask_path = 'results/predict/HM_FAK_N6/N4_model_03/rawAndMask'
-    overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
+    # rawAndMask_path = 'results/predict/HM_DMSO_N6/N1_model_08/rawAndMask'
+    # overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
 

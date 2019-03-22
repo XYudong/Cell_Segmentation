@@ -35,13 +35,13 @@ def visualize_pca(fea_list):
     for fea_path in fea_list:
         v = np.load(fea_path + '/fea_vectors_00.npy')
         fea_vectors.append(v)
-        idx.append(v.shape[0] - 1 + idx[-1])
+        idx.append(v.shape[0] + idx[-1])
 
     fea_vectors = np.concatenate(fea_vectors, axis=0)
     print(fea_vectors.shape)
 
-    FAK_names = ['FAK_' + s for s in ['N1', 'N2', 'N3', 'N4']]
-    DMSO_names = ['DMSO_' + s for s in ['N1', 'N2', 'N3', 'N4']]
+    FAK_names = ['FAK_' + s for s in ['N4', 'N6']]
+    DMSO_names = ['DMSO_' + s for s in ['N4']]
 
     # initialize PCA
     pca = PCA(n_components=2)
@@ -49,11 +49,11 @@ def visualize_pca(fea_list):
 
     plt.figure()
     for i, dataset in enumerate(FAK_names):
-        plt.scatter(fea_low[idx[i]:idx[i + 1], 0], fea_low[idx[i]:idx[i + 1], 1], marker='o', label=dataset)
+        plt.scatter(fea_low[idx[i]:idx[i + 1] - 1, 0], fea_low[idx[i]:idx[i + 1] - 1, 1], marker='o', label=dataset)
 
     for i, dataset in enumerate(DMSO_names):
         i += len(FAK_names)
-        plt.scatter(fea_low[idx[i]:idx[i + 1], 0], fea_low[idx[i]:idx[i + 1], 1], marker='+', label=dataset)
+        plt.scatter(fea_low[idx[i]:idx[i + 1] - 1, 0], fea_low[idx[i]:idx[i + 1] - 1, 1], marker='+', label=dataset)
 
     plt.title('PCA of Cell Features')
     plt.legend()
@@ -67,25 +67,26 @@ def visualize_tsne(fea_list):
     for fea_path in fea_list:
         v = np.load(fea_path + '/fea_vectors_00.npy')
         fea_vectors.append(v)
-        idx.append(v.shape[0] - 1 + idx[-1])
+        idx.append(v.shape[0] + idx[-1])
 
     fea_vectors = np.concatenate(fea_vectors, axis=0)
     print(fea_vectors.shape)
 
-    FAK_names = ['FAK_' + s for s in ['N1', 'N2', 'N3', 'N4']]
-    DMSO_names = ['DMSO_' + s for s in ['N1', 'N2', 'N3', 'N4']]
+    FAK_names = ['FAK_' + s for s in ['N4', 'N6']]
+    DMSO_names = ['DMSO_' + s for s in ['N4']]
 
-    for perplexity in [10, 15, 20, 30, 50]:
-        tsne = TSNE(n_components=2, perplexity=perplexity)
+    for perplexity in [10, 20, 25, 30, 35, 45]:
+        tsne = TSNE(n_components=2, perplexity=perplexity,
+                    learning_rate=20, n_iter=5000)
         fea_low = tsne.fit_transform(fea_vectors)
 
         plt.figure()
         for i, dataset in enumerate(FAK_names):
-            plt.scatter(fea_low[idx[i]:idx[i+1], 0], fea_low[idx[i]:idx[i+1], 1], marker='o', label=dataset)
+            plt.scatter(fea_low[idx[i]:idx[i+1] - 1, 0], fea_low[idx[i]:idx[i+1] - 1, 1], marker='o', label=dataset)
 
         for i, dataset in enumerate(DMSO_names):
             i += len(FAK_names)
-            plt.scatter(fea_low[idx[i]:idx[i+1], 0], fea_low[idx[i]:idx[i+1], 1], marker='+', label=dataset)
+            plt.scatter(fea_low[idx[i]:idx[i+1] - 1, 0], fea_low[idx[i]:idx[i+1] - 1, 1], marker='+', label=dataset)
 
         plt.title('t-SNE of Cell Features, perplexity: ' + str(perplexity))
         plt.legend()
@@ -94,20 +95,16 @@ def visualize_tsne(fea_list):
 
 
 if __name__ == '__main__':
-    pred_mask_path = 'DataSet_label/DMSO_N4/GFP'
-    # pred_mask_path = 'results/predict/FAK_N1/N1_model_08/predMask'
+    # pred_mask_path = 'results/predict/HM_DMSO_N4/N1_model_08/predMask'
+    pred_mask_path = 'results/predict/HM_FAK_N4/N4_model_03/predMask'
     # pred_mask_path = 'DataSet_label/FAK_N1/GFP_MASK_PNG'
     # save_fea_vector(pred_mask_path)
 
-    pred_mask_list = ['results/predict/FAK_N1/N1_model_08/predMask',
-                      'results/predict/FAK_N2/N1_model_08/predMask',
-                      'results/predict/FAK_N3/N1_model_08/predMask',
-                      'results/predict/FAK_N4/N1_model_08/predMask',
-                      'DataSet_label/DMSO_N1/GFP',
-                      'DataSet_label/DMSO_N2/GFP',
-                      'DataSet_label/DMSO_N3/GFP',
-                      'DataSet_label/DMSO_N4/GFP']
+    pred_mask_list = ['results/predict/HM_FAK_N4/N4_model_03/predMask',
+                      'results/predict/HM_FAK_N6/N4_model_03/predMask',
+                      'results/predict/HM_DMSO_N4/N1_model_08/predMask']
     visualize_pca(pred_mask_list)
+    # visualize_tsne(pred_mask_list)
 
 
 
