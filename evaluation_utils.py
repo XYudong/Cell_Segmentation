@@ -47,16 +47,16 @@ class SegPreparer:
         self.edges = []
         self.img_list = []
         self.mask_list = []
-        self.num_x = None   # number of crops in x direction(horizontal)
+        self.num_x = None       # number of crops in x direction(horizontal)
         self.num_y = None
         self.margin_x = None
         self.margin_y = None
-        self.shape = None   # shape of an original image
+        self.shape = None       # shape of an original image
         self.num_test = None    # number of test images
 
     def load_test_set(self):
         """load test set image names"""
-        self.img_list = sorted(glob.glob(path.join(self.im_path, '*.png')))
+        self.img_list = sorted(glob.glob(path.join(self.im_path, '*.png')))     # or *.png
         self.num_test = len(self.img_list)
         assert self.num_test > 0, "empty test set: " + str(self.num_test)
         print(self.img_list)
@@ -64,7 +64,8 @@ class SegPreparer:
 
         if self._mask_path is not None:
             self.mask_list = sorted(glob.glob(path.join(self._mask_path, '*.png')))
-            assert len(self.mask_list) == self.num_test, "different number of test images and masks"
+            assert len(self.mask_list) == self.num_test,\
+                "different number of test images and masks: %s : %s" % (len(self.mask_list), self.num_test)
         return
 
     def init_(self):

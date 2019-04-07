@@ -65,7 +65,7 @@ def new_Unet(model_flag='vUnet'):
     out1 = layers.Conv2D(1, (1, 1), activation='sigmoid', name='out1')(out1)
 
     if model_flag == 'vUnet':
-        out2 = layers.Cropping2D(cropping=((MARGIN, MARGIN), (MARGIN, MARGIN)))(conv92)      # for edge
+        out2 = layers.Cropping2D(cropping=((MARGIN, MARGIN), (MARGIN, MARGIN)))(conv92)  # for edge
         out2 = layers.Conv2D(1, (1, 1), activation='sigmoid', name='out2')(out2)
 
         model = tf.keras.Model(inputs=model.inputs, outputs=[out1, out2])
@@ -99,7 +99,7 @@ def train_Unet(dataset, lr, epochs, trial_num, model_path=None):
                       metrics=[dice_coef],
                       loss_weights=[0.998, 0.002])
     else:
-        model = load_model(model_path)
+        model = load_model(model_path, custom_objects={'dice_coef': dice_coef})
 
     # callbacks
     reduce_lr = ReduceLROnPlateau(monitor='loss', factor=0.5,
@@ -128,8 +128,9 @@ def train_Unet(dataset, lr, epochs, trial_num, model_path=None):
 
 if __name__ == '__main__':
     batch_size = 32
-    dataset = 'FAK_N4_Gray'
-    im_path = 'DataSet_label/Human_Muscle_PF573228/' + dataset + '/train/img'
-    mask_path = 'DataSet_label/Human_Muscle_PF573228/' + dataset + '/train/mask'
+    dataset = 'DMSO_N4_FAK_N4'
+    im_path = 'DataSet_label/Human_Muscle_PF573228/train/img'
+    mask_path = 'DataSet_label/Human_Muscle_PF573228/train/mask'
+    model_resume = 'results/model/Human_Muscle/vUnet_FAK_N4_Gray_03.hdf5'
     for lr, num in zip([5e-4], ['04']):
-        train_Unet(dataset, lr=lr, epochs=40, trial_num=num)
+        train_Unet(dataset, lr=lr, epochs=40, trial_num=num, model_path=model_resume)

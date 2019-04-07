@@ -90,6 +90,7 @@ class FeatureExtractor:
         self.solidity = float(self.max_area) / hull_area
 
     def get_feature_vec(self, mask):
+        # combine all the feature values together
         self.preprocess_mask(mask)
 
         self.cal_contour_and_area()

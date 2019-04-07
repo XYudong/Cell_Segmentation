@@ -27,7 +27,7 @@ class DataPreparer:
 
     def load_img(self):
         """load images and masks from disk and get edges"""
-        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.jpg')))
+        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.tif')))
 
         if len(self.img_list) == 0:
             raise ValueError('there is no matching file in ' + self.im_path)
@@ -166,7 +166,7 @@ class DataPreparer:
         out_gene = zip(gene_mask, gene_edge)
         train_generator = zip(gene_img, out_gene)
 
-        # # Visualize augmented crops
+        # # Visualize augmented crops for debugging
         # for i in range(10):
         #     img = gene_img.next()[i][:, :, 0]
         #     mask = gene_mask.next()[i][:, :, 0]
@@ -214,7 +214,7 @@ class DataPreparer:
             print('to_grey done')
 
     def to_white(self, source):
-        # change mask values to 255
+        # set mask values to 255
         source = self.img_list if source == 'img' else self.mask_list
         if not source:
             raise ValueError(str(source) + " is empty")
@@ -223,6 +223,7 @@ class DataPreparer:
                 img = cv2.imread(name, 0)
                 img = cv2.resize(img, (1128, 832))
                 img[img > 0] = 255
+
                 filename = os.path.splitext(os.path.basename(name))[0] + '.png'
                 cv2.imwrite(os.path.join(out_path, filename), img)
 
@@ -235,13 +236,13 @@ class DataPreparer:
 
 
 if __name__ == '__main__':
-    img_path = 'DataSet_label/Human_Muscle_PF573228/color/10.9.18 DMSO N=6'
-    # mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
+    img_path = 'DataSet_label/Mouse_Muscle/N3/FAK'
+    mask_path = 'DataSet_label/Human_Muscle_PF573228/sample_test'
 
-    out_path = 'DataSet_label/Human_Muscle_PF573228/DMSO_N6_Gray'
-    stats_path = 'DataSet_label/FAK_N1/train/train_mean_std.npz'
+    out_path = 'DataSet_label/Mouse_Muscle/N3/FAK'
+    # stats_path = 'DataSet_label/FAK_N1/train/train_mean_std.npz'
 
-    ob = DataPreparer(img_path)
+    ob = DataPreparer(img_path, None)
     ob.load_img()
     ob.to_grey(out_path)
     # ob.to_white('img')

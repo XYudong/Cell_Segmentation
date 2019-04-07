@@ -8,7 +8,7 @@ from tensorflow.python.keras.layers import Input
 from tensorflow.python.keras.models import Model
 
 
-THRESHOLD = 100     # threshold for predicted mask
+THRESHOLD = 50     # threshold for predicted mask
 
 
 def get_model(model_file):
@@ -52,7 +52,7 @@ def evaluate_model(model_name, out_path=None):
     return
 
 
-def predict_mask_v2(model_name, out_path=None):
+def predict_mask(model_name, out_path=None):
     """input the images as a whole"""
     print('pre-trained model: ', model_name)
     test_preparer = SegPreparer(raw_im_path, train_stats_path)
@@ -85,31 +85,13 @@ def predict_mask_v2(model_name, out_path=None):
     return
 
 
-# def predict_mask_(model_name):
-#     """input the images in crops"""
-#     print('pre-trained model: ', model_name)
-#     test_preparer = SegPreparer(raw_im_path, train_stats_path)
-#     imgs = test_preparer.get_crops()
-#
-#     model = tf.keras.models.load_model('./results/model/' + model_name,
-#                                        custom_objects={'dice_loss': dice_loss,
-#                                                        'dice_coef': dice_coef},
-#                                        compile=True)
-#     pred_mask, pred_edge = model.predict(imgs)
-#
-#     test_preparer.toImages(pred_mask, './results/predict/pred_mask_C3.png')
-#     test_preparer.toImages(pred_edge, './results/predict/pred_edge_C3.png')
-#
-#     return
-
-
 def postprocess(imgs):
     """post-process predicted masks/edges; imgs: a list of arrays"""
     imgs = np.concatenate(imgs, axis=0)
     assert np.max(imgs) <= 1, 'input img is not gray-scale image'
 
     imgs *= 255
-    # imgs[imgs < THRESHOLD] = 0      # threshold
+    imgs[imgs <= THRESHOLD] = 0      # threshold
 
     MARGIN = 30  # because of Cropping2D layer
     imgs = np.pad(imgs[:, :, :, 0], ((0,), (MARGIN,), (MARGIN,)), 'constant').astype('uint8')
@@ -134,7 +116,7 @@ def overlay_img_mask(imgs_path, pred_masks_path, out_path=None):
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
 
         mask = cv2.imread(m_path, 0)
-        regions = mask > 0
+        regions = mask > THRESHOLD
 
         channel_multiplier = [0, 1, 1.5]
         img = img.astype('float32')
@@ -150,7 +132,7 @@ def overlay_img_mask(imgs_path, pred_masks_path, out_path=None):
     return
 
 
-def overlay_img_gt_mask(imgs_path, gt_masks_path, pred_masks_path, out_path):
+def overlay_edges(imgs_path, gt_masks_path, pred_masks_path, out_path):
     """overlay raw image with edges of the ground truth mask and the predicted mask"""
     preparer = SegPreparer(imgs_path, None, mask_path=pred_masks_path)
     preparer.load_test_set()
@@ -203,26 +185,24 @@ def overlay_edg(background, inp, addend):
 
 if __name__ == '__main__':
     # initialization
-    model_name = 'vUnet_FAK_N4_Gray_03.hdf5'
+    model_name = 'vUnet_DMSO_N4_FAK_N4_04.hdf5'
     model_path = 'results/model/Human_Muscle'
-    train_stats_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/train/img/train_mean_std.npz'
+    train_stats_path = 'DataSet_label/Human_Muscle_PF573228/train/img/train_mean_std.npz'
 
-    raw_im_path = 'DataSet_label/Human_Muscle_PF573228/DMSO_N6_Gray'
+    raw_im_path = 'DataSet_label/Mouse_Muscle/N3/DMSO'
     # gt_mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
 
-    pred_mask_path = 'results/predict/HM_DMSO_N6/N1_model_08/predMask'
+    pred_mask_path = 'results/predict/MM_DMSO_N3/N4_model_04/predMask'
     # rawAndEdge_path = 'results/predict/HM_DMSO_N4/N4_model_03/rawAndEdges'
-
-    # batch_size = 16
+    # rawAndMask_path = 'results/predict/MM_FAK_N4/N4_model_04/rawAndMask'
 
     # # get the loss and coef on Test set
     # evaluate_model(model_name, out_path=pred_mask_path)
 
     # # overlay raw image with edges of predicted mask and gt_mask
-    predict_mask_v2(model_name, out_path=pred_mask_path)
-    # overlay_img_gt_mask(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
+    predict_mask(model_name, out_path=pred_mask_path)
+    # overlay_edges(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
-    # rawAndMask_path = 'results/predict/HM_DMSO_N6/N1_model_08/rawAndMask'
     # overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
 
