@@ -4,7 +4,7 @@
 ## Getting started
 [data_utils.py](data_utils.py): For most data processing works;
 
-[Unet_training.py](Unet_training.py): This builds up model and trains it;
+[Unet_training.py](Unet_training.py): This builds up the model and trains it;
 
 [Unet_evaluation.py](Unet_evaluation.py): This runs tests and visualize the results in different forms;
 
