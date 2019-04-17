@@ -9,7 +9,7 @@ from tensorflow.python.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.python.keras import backend as K
 
 tf.keras.backend.set_image_data_format('channels_last')
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # crop this smaller square portions from the original image(s), which are resized to this value (68 pixels by 68 pixels)
 S_SIZE = 68
@@ -113,7 +113,7 @@ def train_Unet(dataset, lr, epochs, trial_num, model_path=None):
     tensorboard = TensorBoard(log_dir='./log/' + dataset + '/' + trial_num,
                               write_graph=False,
                               write_grads=False,
-                              histogram_freq=10,
+                              histogram_freq=15,
                               batch_size=batch_size)
     # train
     hist = model.fit_generator(train_generator,
@@ -128,9 +128,9 @@ def train_Unet(dataset, lr, epochs, trial_num, model_path=None):
 
 if __name__ == '__main__':
     batch_size = 32
-    dataset = 'DMSO_N4_FAK_N4'
+    dataset = 'HumanN4_MouseN1'
     im_path = 'DataSet_label/Human_Muscle_PF573228/train/img'
     mask_path = 'DataSet_label/Human_Muscle_PF573228/train/mask'
-    model_resume = 'results/model/Human_Muscle/vUnet_FAK_N4_Gray_03.hdf5'
-    for lr, num in zip([5e-4], ['04']):
-        train_Unet(dataset, lr=lr, epochs=40, trial_num=num, model_path=model_resume)
+    model_resume = 'results/model/Human_Muscle/vUnet_DMSO_N4_FAK_N4_04.hdf5'
+    for lr, num in zip([5e-4], ['05']):
+        train_Unet(dataset, lr=lr, epochs=30, trial_num=num, model_path=model_resume)

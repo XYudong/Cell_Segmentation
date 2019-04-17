@@ -17,7 +17,7 @@ def draw_contours(mask):
 
 class FeatureExtractor:
     GRAY_THRESHOLD = 30
-    AREA_THRESHOLD = 2000
+    AREA_THRESHOLD = 2500       # in order to ignore outliers
 
     def __init__(self):
         self.mask = None
@@ -32,7 +32,7 @@ class FeatureExtractor:
         self.solidity = 0
         self.num_colony = 0         # number of external contours
         self.num_hole = 0           # number of internal contours
-        self.centroids_dist = 0     # distance od centroids of the largest two areas
+        self.centroids_dist = 0     # distance of centroids of the largest two areas
 
     def preprocess_mask(self, mask):
         self.mask = mask
@@ -107,7 +107,7 @@ class FeatureExtractor:
 
 
 if __name__ == '__main__':
-    mask_path = 'results/predict/HM_FAK_N6/N4_model_03/predMask/predMask_0019.png'
+    mask_path = 'results/predict/MM_DMSO_N3/H4_M1/predMask/predMask_40.png'
     mask = cv2.imread(mask_path, 0)
 
     extractor = FeatureExtractor()

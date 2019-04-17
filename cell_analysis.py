@@ -97,18 +97,18 @@ def visualize_tsne(path_list):
 
 
 if __name__ == '__main__':
-    pred_mask_list = ['results/predict/MM_FAK_N1/N4_model_04/predMask',
-                      'results/predict/MM_FAK_N2/N4_model_04/predMask',
-                      'results/predict/MM_FAK_N3/N4_model_04/predMask',
-                      'results/predict/MM_FAK_N4/N4_model_04/predMask',
-                      'results/predict/MM_DMSO_N1/N4_model_04/predMask',
-                      'results/predict/MM_DMSO_N2/N4_model_04/predMask',
-                      'results/predict/MM_DMSO_N3/N4_model_04/predMask',
-                      'results/predict/MM_DMSO_N4/N4_model_04/predMask']
+    pred_mask_list = ['results/predict/MM_FAK_N1/H4_M1/predMask',
+                      'results/predict/MM_FAK_N2/H4_M1/predMask',
+                      'results/predict/MM_FAK_N3/H4_M1/predMask',
+                      'results/predict/MM_FAK_N4/H4_M1/predMask',
+                      'results/predict/MM_DMSO_N1/H4_M1/predMask',
+                      'results/predict/MM_DMSO_N2/H4_M1/predMask',
+                      'results/predict/MM_DMSO_N3/H4_M1/predMask',
+                      'results/predict/MM_DMSO_N4/H4_M1/predMask']
 
     # First step:
     # save_fea_vector(pred_mask_list)
 
     # Second step:
-    visualize_pca(pred_mask_list)
-    # visualize_tsne(pred_mask_list)
+    # visualize_pca(pred_mask_list)
+    visualize_tsne(pred_mask_list)

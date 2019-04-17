@@ -185,24 +185,24 @@ def overlay_edg(background, inp, addend):
 
 if __name__ == '__main__':
     # initialization
-    model_name = 'vUnet_DMSO_N4_FAK_N4_04.hdf5'
+    model_name = 'vUnet_HumanN4_MouseN1_05.hdf5'
     model_path = 'results/model/Human_Muscle'
     train_stats_path = 'DataSet_label/Human_Muscle_PF573228/train/img/train_mean_std.npz'
 
-    raw_im_path = 'DataSet_label/Mouse_Muscle/N3/DMSO'
+    raw_im_path = 'DataSet_label/Mouse_Muscle/N2/FAK'
     # gt_mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
 
-    pred_mask_path = 'results/predict/MM_DMSO_N3/N4_model_04/predMask'
+    pred_mask_path = 'results/predict/MM_FAK_N2/H4_M1/predMask'
     # rawAndEdge_path = 'results/predict/HM_DMSO_N4/N4_model_03/rawAndEdges'
-    # rawAndMask_path = 'results/predict/MM_FAK_N4/N4_model_04/rawAndMask'
+    rawAndMask_path = 'results/predict/MM_FAK_N2/H4_M1/rawAndMask'
 
     # # get the loss and coef on Test set
     # evaluate_model(model_name, out_path=pred_mask_path)
 
     # # overlay raw image with edges of predicted mask and gt_mask
-    predict_mask(model_name, out_path=pred_mask_path)
+    # predict_mask(model_name, out_path=pred_mask_path)
     # overlay_edges(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
-    # overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
+    overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
 

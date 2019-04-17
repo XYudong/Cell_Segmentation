@@ -27,7 +27,7 @@ class DataPreparer:
 
     def load_img(self):
         """load images and masks from disk and get edges"""
-        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.tif')))
+        self.img_list = sorted(glob.glob(os.path.join(self.im_path, '*.png')))
 
         if len(self.img_list) == 0:
             raise ValueError('there is no matching file in ' + self.im_path)
@@ -236,19 +236,19 @@ class DataPreparer:
 
 
 if __name__ == '__main__':
-    img_path = 'DataSet_label/Mouse_Muscle/N3/FAK'
+    img_path = 'DataSet_label/Human_Muscle_PF573228/sample_test'
     mask_path = 'DataSet_label/Human_Muscle_PF573228/sample_test'
 
-    out_path = 'DataSet_label/Mouse_Muscle/N3/FAK'
+    out_path = 'DataSet_label/Human_Muscle_PF573228/sample_test_result'
     # stats_path = 'DataSet_label/FAK_N1/train/train_mean_std.npz'
 
-    ob = DataPreparer(img_path, None)
-    ob.load_img()
-    ob.to_grey(out_path)
+    ob = DataPreparer(img_path, mask_path)
+    # ob.load_img()
+    # ob.to_grey(out_path)
     # ob.to_white('img')
 
-    # ob.load_mask()
-    # ob.to_white('mask')
+    ob.load_mask()
+    ob.to_white('mask')
 
 
 
