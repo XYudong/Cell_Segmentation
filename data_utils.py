@@ -251,5 +251,3 @@ if __name__ == '__main__':
     ob.to_white('mask')
 
 
-
-

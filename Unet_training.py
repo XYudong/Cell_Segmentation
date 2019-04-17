@@ -75,7 +75,8 @@ def new_Unet(model_flag='vUnet'):
     return model
 
 
-def train_Unet(dataset, lr, epochs, trial_num, model_path=None):
+def train_vUnet(dataset, lr, epochs, trial_num, model_path=None):
+    # get the data
     data_getter = DataPreparer(im_path, mask_path, batch_size=batch_size)
     train_generator, val_generator = data_getter.main()
     num_train = data_getter.num_train
@@ -133,4 +134,4 @@ if __name__ == '__main__':
     mask_path = 'DataSet_label/Human_Muscle_PF573228/train/mask'
     model_resume = 'results/model/Human_Muscle/vUnet_DMSO_N4_FAK_N4_04.hdf5'
     for lr, num in zip([5e-4], ['05']):
-        train_Unet(dataset, lr=lr, epochs=30, trial_num=num, model_path=model_resume)
+        train_vUnet(dataset, lr=lr, epochs=30, trial_num=num, model_path=model_resume)

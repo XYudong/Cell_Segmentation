@@ -53,7 +53,9 @@ def evaluate_model(model_name, out_path=None):
 
 
 def predict_mask(model_name, out_path=None):
-    """input the images as a whole"""
+    """input the images as a whole,
+     using the given model to predict the mask and save it in out_path if given
+    """
     print('pre-trained model: ', model_name)
     test_preparer = SegPreparer(raw_im_path, train_stats_path)
     imgs = test_preparer.get_imgs()
@@ -61,6 +63,7 @@ def predict_mask(model_name, out_path=None):
     model = get_model(path.join(model_path, model_name))
     pred_masks = []
     pred_edges = []
+
     print('predicting...')
     for img in imgs:
         mask, edge = model.predict(img[np.newaxis, ...])      # output: (1, 772, 1060, 1)
@@ -73,7 +76,6 @@ def predict_mask(model_name, out_path=None):
     img_names = get_filename(raw_im_path)
     if out_path is not None:
         for name, mask, edge in zip(img_names, pred_masks, pred_edges):
-            # print(name)
             save_img(mask, out_path + '/predMask_' + name)
             # save_img(edge, out_path + '/predEdge_' + img_name[0:-21] + '.png')
     else:
@@ -190,19 +192,21 @@ if __name__ == '__main__':
     train_stats_path = 'DataSet_label/Human_Muscle_PF573228/train/img/train_mean_std.npz'
 
     raw_im_path = 'DataSet_label/Mouse_Muscle/N2/FAK'
-    # gt_mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'
+    # gt_mask_path = 'DataSet_label/Human_Muscle_PF573228/FAK_N4_Gray/test/mask'        # for evaluate_model()
 
     pred_mask_path = 'results/predict/MM_FAK_N2/H4_M1/predMask'
     # rawAndEdge_path = 'results/predict/HM_DMSO_N4/N4_model_03/rawAndEdges'
     rawAndMask_path = 'results/predict/MM_FAK_N2/H4_M1/rawAndMask'
 
-    # # get the loss and coef on Test set
+    # # Quantitive: get the loss and dice_coefficient results on Test set
     # evaluate_model(model_name, out_path=pred_mask_path)
 
+    # # Qualitive
+    predict_mask(model_name, out_path=pred_mask_path)
+
     # # overlay raw image with edges of predicted mask and gt_mask
-    # predict_mask(model_name, out_path=pred_mask_path)
     # overlay_edges(raw_im_path, gt_mask_path, pred_mask_path, out_path=rawAndEdge_path)
 
     # # overlay raw image with predicted mask
-    overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
+    # overlay_img_mask(raw_im_path, pred_mask_path, out_path=rawAndMask_path)
 
