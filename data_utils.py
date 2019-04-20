@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 class DataPreparer:
     CROP_SIZE = 128
     MARGIN = 30         # (128 - 68) / 2
-    SPLIT_RATE = 0.2
+    SPLIT_RATE = 0.2    # val : train = 2 : 8
 
     def __init__(self, im_path, mask_path=None, crop_num=200, batch_size=32):
         self.im_path = im_path
@@ -152,7 +152,8 @@ class DataPreparer:
         self.masks = self.add_axis(self.masks)
         self.edges = self.add_axis(self.edges)
         seed = 66
-        # split data
+
+        # split crops
         imgs_tr, imgs_val, masks_tr, masks_val, edges_tr, edges_val\
             = train_test_split(self.imgs, self.masks, self.edges,
                                test_size=self.SPLIT_RATE, random_state=seed)
@@ -236,17 +237,21 @@ class DataPreparer:
 
 
 if __name__ == '__main__':
+    # initialization
     img_path = 'DataSet_label/Human_Muscle_PF573228/sample_test'
     mask_path = 'DataSet_label/Human_Muscle_PF573228/sample_test'
 
     out_path = 'DataSet_label/Human_Muscle_PF573228/sample_test_result'
     # stats_path = 'DataSet_label/FAK_N1/train/train_mean_std.npz'
 
-    ob = DataPreparer(img_path, mask_path)
+    ob = DataPreparer(img_path, None)
+
+    # process raw images
     # ob.load_img()
-    # ob.to_grey(out_path)
+    # ob.to_grey(out_path)      # if necessary
     # ob.to_white('img')
 
+    # process masks
     ob.load_mask()
     ob.to_white('mask')
 

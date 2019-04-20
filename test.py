@@ -3,8 +3,6 @@ from os import path
 import glob
 import cv2
 import matplotlib.pyplot as plt
-import heapq
-import tensorflow as tf
 
 # read_msk('DataSet_label/FAK_N1/img/C1_01_1_1_Bright Field_001.tif')
 
@@ -41,34 +39,15 @@ import tensorflow as tf
 #     return out
 
 
-def test_fn():
-    # img0 = cv2.imread('results/predict/HM_FAK_N6/N4_model_03/predMask/predMask_0029.png', 0)
-
-    img = np.zeros((100, 100)).astype(np.uint8)
-    cv2.circle(img, (50, 50), 20, 1, thickness=-1)
-    cv2.circle(img, (50, 50), 10, 0, thickness=-1)
-
-    cnts, _ = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    areas = [cv2.contourArea(c) for c in cnts]
-    print(areas)
-
-    print(np.pi * 10**2)
-    print(np.pi * 20**2)
-
-    plt.figure()
-    plt.imshow(img, 'gray')
-
-    plt.show()
+def fn():
+    a = 'aaa'
+    b = ['bbb', 'ccc', 'ddd']
+    print(b[0:2])
 
 
 if __name__ == '__main__':
     # extract_fea()
-    # test_fn()
-    a = [-2, 2]
-    print(np.linalg.norm(a))
-
-
-
+    fn()
 
 
 

@@ -9,7 +9,7 @@ from tensorflow.python.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.python.keras import backend as K
 
 tf.keras.backend.set_image_data_format('channels_last')
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # crop this smaller square portions from the original image(s), which are resized to this value (68 pixels by 68 pixels)
 S_SIZE = 68
@@ -132,6 +132,7 @@ if __name__ == '__main__':
     dataset = 'HumanN4_MouseN1'
     im_path = 'DataSet_label/Human_Muscle_PF573228/train/img'
     mask_path = 'DataSet_label/Human_Muscle_PF573228/train/mask'
-    model_resume = 'results/model/Human_Muscle/vUnet_DMSO_N4_FAK_N4_04.hdf5'
-    for lr, num in zip([5e-4], ['05']):
+    model_resume = 'results/model/Human_Muscle/vUnet_HumanN4_MouseN1_05.hdf5'
+
+    for lr, num in zip([5e-4], ['temp']):
         train_vUnet(dataset, lr=lr, epochs=30, trial_num=num, model_path=model_resume)

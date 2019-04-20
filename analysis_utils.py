@@ -17,7 +17,7 @@ def draw_contours(mask):
 
 class FeatureExtractor:
     GRAY_THRESHOLD = 30
-    AREA_THRESHOLD = 2500       # in order to ignore outliers
+    AREA_THRESHOLD = 2500           # in order to ignore outliers
 
     def __init__(self):
         self.mask = None
@@ -89,7 +89,7 @@ class FeatureExtractor:
         hull_area = cv2.contourArea(hull)
         self.solidity = float(self.max_area) / hull_area
 
-    def get_feature_vec(self, mask):
+    def get_fea_vec_0(self, mask):
         # combine all the feature values together
         self.preprocess_mask(mask)
 
@@ -105,11 +105,23 @@ class FeatureExtractor:
                             self.centroids_dist], dtype='float32')
         return fea_vec
 
+    def get_fea_vec_1(self, mask):
+        # just two features
+        self.preprocess_mask(mask)
+
+        self.cal_contour_and_area()
+        self.cal_solidity()
+
+        fea_vec = np.array([self.ex_area, self.num_colony])
+
+        return fea_vec
+
 
 if __name__ == '__main__':
+    # test a single image
     mask_path = 'results/predict/MM_DMSO_N3/H4_M1/predMask/predMask_40.png'
     mask = cv2.imread(mask_path, 0)
 
     extractor = FeatureExtractor()
-    vec = extractor.get_feature_vec(mask)
+    vec = extractor.get_fea_vec_0(mask)
     print(vec)
